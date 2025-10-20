@@ -27,6 +27,6 @@ public class ReminderBeforeEventValidator implements ConstraintValidator<Reminde
             ).addPropertyNode("reminderTime").addConstraintViolation();
         }
 
-        return valid;
+        return  valid;
     }
 }
