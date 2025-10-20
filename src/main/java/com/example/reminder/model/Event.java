@@ -1,5 +1,6 @@
 package com.example.reminder.model;
 
+import com.example.reminder.validation.ReminderBeforeEvent;
 import com.example.reminder.validation.TomorrowOrLater;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Future;
@@ -23,6 +24,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ReminderBeforeEvent
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
