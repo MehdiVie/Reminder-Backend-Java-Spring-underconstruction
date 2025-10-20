@@ -41,6 +41,13 @@ public class Event {
     @Column(nullable = false)
     private LocalDate eventDate;
 
-    @FutureOrPresent(message = "Reminder time must be in the future or now.")
+    @FutureOrPresent(message = "Reminder time must be in the future or now." , groups = OnCreate.class)
     private LocalDateTime reminderTime;
+
+    // to track if reminder sent or not
+    private boolean reminderSent=false;
+
+    public interface OnCreate{};
+    public interface OnUpdate{};
+
 }

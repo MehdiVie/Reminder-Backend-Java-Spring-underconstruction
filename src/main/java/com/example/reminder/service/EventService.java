@@ -2,15 +2,21 @@ package com.example.reminder.service;
 
 import com.example.reminder.model.Event;
 import com.example.reminder.repository.EventRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 
@@ -19,12 +25,14 @@ import java.util.Set;
 public class EventService {
     private final EventRepository repo;
 
+
     // Allowed sort fields (white list)
     private static final Set<String> ALLOWED_SORTS = Set.of("id", "eventDate", "title", "reminderTime");
 
 
     public EventService(EventRepository repository) {
         this.repo = repository;
+
     }
 
     public Page<Event> getPagedEvents(Integer page, Integer size, String sortBy,
@@ -53,8 +61,6 @@ public class EventService {
             return repo.findAllAfterDate(afterDate, pageable);
         }
 
-
-
         return repo.findAll(pageable);
 
     }
@@ -67,6 +73,7 @@ public class EventService {
         return repo.findAll();
     }
 
+    @Validated(Event.OnCreate.class)
     public Event createEvent(Event event) {
         return repo.save(event);
     }
@@ -85,5 +92,32 @@ public class EventService {
 
     public void deleteEvent(Long id) {
         repo.deleteById(id);
+    }
+
+    @Scheduled(fixedRate = 60000)
+    @Transactional
+    public void checkReminders() {
+
+        LocalDateTime now = LocalDateTime.now().withNano(0);
+        /*System.out.println("------------------------------------------------");
+        System.out.println("checkReminders() running at: " + now);
+        System.out.println("Local time: " + LocalDateTime.now());*/
+        List<Event> dueEvents = repo.findPendingReminders(now);
+
+
+        for(Event e : dueEvents) {
+            System.out.println("Its time for event "+e.getTitle()+"("+e.getReminderTime()+")");
+            try {
+                e.setReminderSent(true);
+                repo.save(e);
+            } catch (Exception ex) {
+                log.error("Failed to update reminder for event {}", e.getId(), ex);
+            }
+        }
+
+        if (!dueEvents.isEmpty()) {
+            System.out.println("Proccessed "+dueEvents.size()+" reminders at "+now);
+        }
+
     }
 }
